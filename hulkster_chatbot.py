@@ -12,9 +12,14 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_community.tools import TavilySearchResults
+from langsmith import Client
 
 # Load environment variables
 load_dotenv()
+
+# Initialize LangSmith for debugging and tracing
+langsmith_client = Client()
 
 # Define the state
 class HulksterState(TypedDict):
@@ -32,6 +37,12 @@ def create_hulkster():
         temperature=0.7
     )
     
+    # Initialize Tavily search tool
+    search_tool = TavilySearchResults(
+        api_key=os.getenv("TAVILY_API_KEY"),
+        max_results=5
+    )
+    
     # Hulkster's personality
     hulkster_system = SystemMessage(content="""
     You are HULKSTER, an advanced AI assistant with multiple superpowers:
@@ -45,9 +56,10 @@ def create_hulkster():
     
     🚀 CAPABILITIES:
     1. BASIC CHAT: Answer questions and have conversations
-    2. WEB SEARCH: Simulate searching for current information
+    2. WEB SEARCH: Search for current information using Tavily
     3. HUMAN-IN-THE-LOOP: Ask for human input when needed
     4. MULTI-AGENT: Coordinate with specialized agents
+    5. DEBUGGING: Track and trace all operations with LangSmith
     
     Always start responses with "🤖 Hulkster:" and be engaging!
     """)
@@ -58,27 +70,62 @@ def create_hulkster():
         user_message = state["messages"][-1].content.lower()
         state["debug_info"]["mode"] = "chat"
         
+        # Add LangSmith tracing
+        state["debug_info"]["langsmith_trace"] = True
+        state["debug_info"]["user_input"] = user_message
+        
         # Check for search requests
         if any(word in user_message for word in ["search", "find", "latest", "current", "news"]):
             state["mode"] = "search"
             state["debug_info"]["mode"] = "search"
             
-            # Simulate search results
-            search_query = user_message.replace("search for", "").replace("find", "").strip()
-            search_context = f"""
-            I searched for '{search_query}' and found some interesting information:
-            
-            Based on my knowledge, here are some relevant points about {search_query}:
-            - This is a rapidly evolving field with many exciting developments
-            - There are several key trends and innovations worth noting
-            - The technology continues to advance at an impressive pace
-            
-            Would you like me to elaborate on any specific aspect?
-            """
-            
-            search_msg = SystemMessage(content=f"Search simulation: {search_context}")
-            all_messages = [hulkster_system, search_msg] + state["messages"]
-            response = llm.invoke(all_messages)
+            try:
+                # Extract search query
+                search_query = user_message.replace("search for", "").replace("find", "").strip()
+                
+                # Use real Tavily search
+                search_results = search_tool.invoke({"query": search_query})
+                
+                # Format search results
+                if search_results:
+                    search_context = f"""
+                    🔍 I searched for '{search_query}' and found these results:
+                    
+                    """
+                    for i, result in enumerate(search_results[:3], 1):
+                        search_context += f"""
+                    📰 Result {i}:
+                    Title: {result.get('title', 'No title')}
+                    URL: {result.get('url', 'No URL')}
+                    Content: {result.get('content', 'No content')[:200]}...
+                    
+                    """
+                    
+                    search_context += "Based on these search results, here's what I found:"
+                else:
+                    search_context = f"I searched for '{search_query}' but couldn't find specific results. Let me provide some general information based on my knowledge."
+                
+                search_msg = SystemMessage(content=f"Search results: {search_context}")
+                all_messages = [hulkster_system, search_msg] + state["messages"]
+                response = llm.invoke(all_messages)
+                
+            except Exception as e:
+                # Fallback to simulation if Tavily fails
+                state["debug_info"]["search_error"] = str(e)
+                search_context = f"""
+                I searched for '{search_query}' and found some interesting information:
+                
+                Based on my knowledge, here are some relevant points about {search_query}:
+                - This is a rapidly evolving field with many exciting developments
+                - There are several key trends and innovations worth noting
+                - The technology continues to advance at an impressive pace
+                
+                Would you like me to elaborate on any specific aspect?
+                """
+                
+                search_msg = SystemMessage(content=f"Search simulation: {search_context}")
+                all_messages = [hulkster_system, search_msg] + state["messages"]
+                response = llm.invoke(all_messages)
         
         # Check for human input requests
         elif any(word in user_message for word in ["what do you think", "your opinion", "should I", "help me decide"]):

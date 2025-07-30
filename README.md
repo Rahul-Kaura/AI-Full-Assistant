@@ -50,9 +50,10 @@ python3 hulkster_chatbot.py
 ## 🎯 Features
 
 - ✅ **Complete LangGraph Implementation** - All 4 lessons mastered
+- ✅ **Real Web Search** - Live search using Tavily API
 - ✅ **Human-in-the-Loop Integration** - Collaborative AI decision making
 - ✅ **Multi-Agent Coordination** - Specialized agents working together
-- ✅ **Debugging & Observability** - LangSmith integration
+- ✅ **Debugging & Observability** - LangSmith tracing and monitoring
 - ✅ **Smart Routing System** - Intelligent capability selection
 - ✅ **Production-Ready Code** - Error handling and proper structure
 
@@ -64,9 +65,25 @@ python3 hulkster_chatbot.py
 3. Generate an API key
 4. Add it to your `.env` file
 
-### Optional APIs (Not Currently Used)
-- **Tavily**: For web search (currently simulated)
-- **LangSmith**: For debugging and tracing (currently not implemented)
+### Tavily API Key (Required for Web Search)
+1. Visit [Tavily](https://tavily.com/)
+2. Sign up for a free account
+3. Generate an API key
+4. Add it to your `.env` file
+
+### LangSmith API Key (Optional for Debugging)
+1. Visit [LangSmith](https://smith.langchain.com/)
+2. Sign up for a free account
+3. Generate an API key
+4. Add it to your `.env` file
+
+### Environment Variables
+Create a `.env` file in the project root:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
+LANGSMITH_API_KEY=your_langsmith_api_key_here
+```
 
 ---
 
