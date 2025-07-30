@@ -16,7 +16,8 @@ def run_test(test_number):
         3: "test_3_search.py",
         4: "test_4_human_input.py",
         5: "test_5_multi_agent.py",
-        6: "run_all_tests.py"
+        6: "run_all_tests.py",
+        7: "hulkster_chatbot_simple.py"
     }
     
     if test_number not in tests:
@@ -33,7 +34,14 @@ def run_test(test_number):
     print("=" * 60)
     
     try:
-        result = subprocess.run(f"python3 {test_file}", shell=True, timeout=60)
+        if test_number == 7:
+            # For the interactive chatbot, run it directly (not as a test)
+            print("🤖 Starting Interactive Hulkster Chatbot...")
+            print("💡 Type 'quit' to exit the chat")
+            print("-" * 60)
+            result = subprocess.run(f"python3 {test_file}", shell=True)
+        else:
+            result = subprocess.run(f"python3 {test_file}", shell=True, timeout=60)
         return result.returncode == 0
     except subprocess.TimeoutExpired:
         print("❌ Test timed out after 60 seconds")
@@ -54,12 +62,13 @@ def main():
     print("4. 👥 Test Human Input (Human-in-the-Loop)")
     print("5. 🤝 Test Multi-Agent Coordination")
     print("6. 🚀 Run ALL Tests (Complete Test Suite)")
+    print("7. 💬 Start Interactive Chatbot (Normal Chat)")
     print("0. ❌ Exit")
     print()
     
     while True:
         try:
-            choice = input("Enter test number (0-6): ").strip()
+            choice = input("Enter test number (0-7): ").strip()
             
             if choice == "0":
                 print("🤖 Hulkster: Thanks for testing! See you later! 👋")
@@ -67,17 +76,20 @@ def main():
             
             if choice.isdigit():
                 test_number = int(choice)
-                if 1 <= test_number <= 6:
+                if 1 <= test_number <= 7:
                     success = run_test(test_number)
-                    if success:
+                    if test_number == 7:
+                        print(f"\n✅ Interactive chatbot session ended!")
+                    elif success:
                         print(f"\n✅ Test {test_number} completed successfully!")
                     else:
                         print(f"\n❌ Test {test_number} failed!")
                     
-                    print("\n" + "="*60)
-                    print("Choose another test or enter 0 to exit:")
+                    if test_number != 7:  # Don't show menu again for interactive chat
+                        print("\n" + "="*60)
+                        print("Choose another test or enter 0 to exit:")
                 else:
-                    print("❌ Please enter a number between 0 and 6")
+                    print("❌ Please enter a number between 0 and 7")
             else:
                 print("❌ Please enter a valid number")
                 
