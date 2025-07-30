@@ -64,6 +64,10 @@ python3 hulkster_chatbot.py
 3. Generate an API key
 4. Add it to your `.env` file
 
+### Optional APIs (Not Currently Used)
+- **Tavily**: For web search (currently simulated)
+- **LangSmith**: For debugging and tracing (currently not implemented)
+
 ---
 
 **🤖 Hulkster: Ready to run wild on your problems! 💪**
